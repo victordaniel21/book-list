@@ -4,5 +4,5 @@ postgres:
   port: 5432
   net: "tcp"
   user: "postgres"
-  password: "123456"
+  password: "abc123"
   db: "book_collection"

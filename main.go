@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
 type Book struct {
@@ -23,8 +24,8 @@ var (
 	host     = goconf.Config().GetString("postgres.host")
 	port     = goconf.Config().GetInt("postgres.port")
 	user     = goconf.Config().GetString("postgres.user")
-	password = goconf.Config().GetString("postres.password")
-	dbname   = goconf.Config().GetString("postgres.dbname")
+	password = goconf.Config().GetString("postgres.password")
+	dbname   = goconf.Config().GetString("postgres.db")
 )
 
 func createConnection() *sql.DB {
@@ -60,15 +61,31 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func addBook(w http.ResponseWriter, r *http.Request) {
-	//1. Decode body json
-	var book Book
-	_ = json.NewDecoder(r.Body).Decode(&book)
+	// 1. Initiate Book and ID
+	var (
+		book   Book
+		bookID int
+	)
 
-	//2. Adding the data to slice books
-	books = append(books, book)
+	// 2. Get data request, then decode to Book
+	json.NewDecoder(r.Body).Decode(&book)
 
-	//3. Encode the data books
-	json.NewEncoder(w).Encode(books)
+	// 3. Get connection
+	dbConn := createConnection()
+	defer dbConn.Close()
+
+	// 4. Command query to insert data
+	err := dbConn.QueryRow(`
+		INSERT INTO book.books(title, author, year)
+		VALUES($1, $2, $3)
+		RETURNING id`, book.Title, book.Author, book.Year).Scan(&bookID)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 5. Return data(encode)
+	json.NewEncoder(w).Encode(bookID)
 }
 
 func updateBook(w http.ResponseWriter, r *http.Request) {
