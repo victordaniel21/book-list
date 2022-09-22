@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
 )
 
 type Book struct {
@@ -24,8 +23,8 @@ var (
 	host     = goconf.Config().GetString("postgres.host")
 	port     = goconf.Config().GetInt("postgres.port")
 	user     = goconf.Config().GetString("postgres.user")
-	password = goconf.Config().GetString("postgres.password")
-	dbname   = goconf.Config().GetString("postgres.db")
+	password = goconf.Config().GetString("postres.password")
+	dbname   = goconf.Config().GetString("postgres.dbname")
 )
 
 func createConnection() *sql.DB {
@@ -89,39 +88,55 @@ func addBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateBook(w http.ResponseWriter, r *http.Request) {
-
-	//1. decode body json
+	// 0. Initiate struct Book
 	var book Book
-	_ = json.NewDecoder(r.Body).Decode(&book)
 
-	//2. searching data in slice books. if match, put the data
-	for idx, item := range books {
-		if item.ID == book.ID {
-			books[idx] = book
-		}
+	// 1. Get data request, then decode to Book
+	json.NewDecoder(r.Body).Decode(&book)
+
+	// 2. Get connection
+	dbConn := createConnection()
+	defer dbConn.Close()
+
+	// 3. Query to fetch data in DB
+	result, err := dbConn.Exec("UPDATE book.books SET title=$1, author=$2, year=$3 WHERE id=$4 RETURNING id",
+		&book.Title, &book.Author, &book.Year, &book.ID)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	//3. Encode the updated data
-	json.NewEncoder(w).Encode(books)
+	// 4. Checking how many rows was updated => err.RowsAffected()
+	rowUpdated, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 5. Response data
+	json.NewEncoder(w).Encode(rowUpdated)
+
 }
 
 func deleteBook(w http.ResponseWriter, r *http.Request) {
 
 	//1. catch query parameter
-	params := mux.Vars(r)
+	qParams := mux.Vars(r)
 
-	//2. convert data string to int
-	id, _ := strconv.Atoi(params["id"])
+	//2. get connection
+	dbConn := createConnection()
+	defer dbConn.Close()
 
-	//3. searching data in slice books. if match, delete the data
-	for idx, book := range books {
-		if book.ID == id {
-			books = append(books[:idx], books[idx+1:]...)
-		}
+	//3. Query to delete data in DB
+	result, err := dbConn.Exec("DELETE FROM boo.books WHERE id=$1", qParams["id"])
+	if err != nil {
+		log.Fatal(err)
+	}
+	//4. Checking how many rows was updated => result.RowsAffected()
+	rowDeleted, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	//4. Encode the data books
-	json.NewEncoder(w).Encode(books)
+	//5. Response data
+	json.NewEncoder(w).Encode(rowDeleted)
 }
 
 func main() {
