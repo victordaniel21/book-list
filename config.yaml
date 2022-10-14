@@ -6,3 +6,4 @@ postgres:
   user: "postgres"
   password: "abc123"
   db: "book_collection"
+jwtsecret: "Top Secret"

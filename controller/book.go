@@ -6,64 +6,16 @@ import (
 	"book-list/utils"
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/crypto/bcrypt"
 )
 
-type controller struct{}
+type Controller struct{}
 
 var books []models.Book
 
-func (c controller) Signup(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var (
-			user   models.User
-			errMsg models.Error
-		)
-
-		// decode request body to JSON to User struct
-		json.NewDecoder(r.Body).Decode(&user)
-
-		// validation field email should not be empty
-		if user.Email == "" {
-			errMsg.Message = "Email should not be empty"
-			utils.SendError(w, http.StatusBadRequest, errMsg)
-			return
-		}
-
-		// validation field password should not be empty
-		if user.Password == "" {
-			errMsg.Message = "Password should not be empty"
-			utils.SendError(w, http.StatusBadRequest, errMsg)
-			return
-		}
-
-		// Hashing password
-		hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// populated data hash to user.password
-		user.Password = string(hash)
-
-		// calling repository
-		userRep := userRepo.UserRepository{}
-		user, errUser := userRep.Signup(db, user)
-		if errUser != nil {
-			errMsg.Message = "Soemthing gone wrogn with sql" + errUser.Error()
-			utils.SendError(w, http.StatusInternalServerError, errMsg)
-			return
-		}
-
-		utils.SendSuccess(w, user)
-	}
-}
-
-func (c controller) GetBooks(db *sql.DB) http.HandlerFunc {
+func (c Controller) GetBooks(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 1. initialize; creating var
 		var (
@@ -88,7 +40,7 @@ func (c controller) GetBooks(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (c controller) GetBook(db *sql.DB) http.HandlerFunc {
+func (c Controller) GetBook(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 1. Initiallize struct book
 		var (
@@ -114,7 +66,7 @@ func (c controller) GetBook(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (c controller) AddBook(db *sql.DB) http.HandlerFunc {
+func (c Controller) AddBook(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			book   models.Book
@@ -138,7 +90,7 @@ func (c controller) AddBook(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (c controller) DeleteBook(db *sql.DB) http.HandlerFunc {
+func (c Controller) DeleteBook(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var errMsg models.Error
 
@@ -158,7 +110,7 @@ func (c controller) DeleteBook(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (c controller) UpdateBook(db *sql.DB) http.HandlerFunc {
+func (c Controller) UpdateBook(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// initiate struct Book
 		var (

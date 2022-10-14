@@ -1,31 +1,32 @@
 package main
 
 import (
+	"book-list/controller"
+	"book-list/drivers"
+	"database/sql"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
-var books []Book
+var dbPsql *sql.DB
 
 func main() {
+	dbPsql = drivers.CreateConnection()
+	c := controller.Controller{}
+
 	router := mux.NewRouter()
 
-	books = append(books, Book{ID: 1, Title: "Golang is Fun", Author: "John Doe", Year: "2010"},
-		Book{ID: 2, Title: "Golang is Easy", Author: "Gopher", Year: "2011"},
-		Book{ID: 3, Title: "Golang is Multipurpose Programming Language", Author: "John Walker", Year: "2011"},
-		Book{ID: 4, Title: "Golang is Fast", Author: "Jimmy Doe", Year: "2012"},
-		Book{ID: 5, Title: "Golang is Cool", Author: "Nick Name", Year: "2015"})
+	router.HandleFunc("/books", c.GetBooks(dbPsql)).Methods("GET")
+	router.HandleFunc("/books/{id}", c.GetBook(dbPsql)).Methods("GET")
+	router.HandleFunc("/books", c.AddBook(dbPsql)).Methods("POST")
+	router.HandleFunc("/books", c.UpdateBook(dbPsql)).Methods("PUT")
+	router.HandleFunc("/books/{id}", c.DeleteBook(dbPsql)).Methods("DELETE")
 
-	router.HandleFunc("/books", getBooks).Methods("GET")
-	router.HandleFunc("/books/{id}", getBook).Methods("GET")
-	router.HandleFunc("/books", addBook).Methods("POST")
-	router.HandleFunc("/books", updateBook).Methods("PUT")
-	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
-
-	router.HandleFunc("/signup", controller.Signup(db)).Methods("POST")
-
+	router.HandleFunc("/signup", c.Signup(dbPsql)).Methods("POST")
+	router.HandleFunc("/signin", c.Signin(dbPsql)).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8000", router))
 
 }
