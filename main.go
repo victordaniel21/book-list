@@ -1,116 +1,114 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 var books []Book
 
-func getBooks(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(books)
+// func getBooks(w http.ResponseWriter, r *http.Request) {
+// 	json.NewEncoder(w).Encode(books)
 
-}
+// }
 
-func getBook(w http.ResponseWriter, r *http.Request) {
-	//1. catch query parameter
-	params := mux.Vars(r)
+// func getBook(w http.ResponseWriter, r *http.Request) {
+// 	//1. catch query parameter
+// 	params := mux.Vars(r)
 
-	//2. convert the data from string to integer
-	id, _ := strconv.Atoi(params["id"])
+// 	//2. convert the data from string to integer
+// 	id, _ := strconv.Atoi(params["id"])
 
-	//3. search the data in slice books, if match show the data
-	for _, book := range books {
-		if book.ID == id {
-			json.NewEncoder(w).Encode(book)
-		}
+// 	//3. search the data in slice books, if match show the data
+// 	for _, book := range books {
+// 		if book.ID == id {
+// 			json.NewEncoder(w).Encode(book)
+// 		}
 
-	}
-}
+// 	}
+// }
 
-func addBook(w http.ResponseWriter, r *http.Request) {
-	// 1. Initiate Book and ID
-	var (
-		book   Book
-		bookID int
-	)
+// func addBook(w http.ResponseWriter, r *http.Request) {
+// 	// 1. Initiate Book and ID
+// 	var (
+// 		book   Book
+// 		bookID int
+// 	)
 
-	// 2. Get data request, then decode to Book
-	json.NewDecoder(r.Body).Decode(&book)
+// 	// 2. Get data request, then decode to Book
+// 	json.NewDecoder(r.Body).Decode(&book)
 
-	// 3. Get connection
-	dbConn := createConnection()
-	defer dbConn.Close()
+// 	// 3. Get connection
+// 	dbConn := createConnection()
+// 	defer dbConn.Close()
 
-	// 4. Command query to insert data
-	err := dbConn.QueryRow(`
-		INSERT INTO book.books(title, author, year)
-		VALUES($1, $2, $3)
-		RETURNING id`, book.Title, book.Author, book.Year).Scan(&bookID)
+// 	// 4. Command query to insert data
+// 	err := dbConn.QueryRow(`
+// 		INSERT INTO book.books(title, author, year)
+// 		VALUES($1, $2, $3)
+// 		RETURNING id`, book.Title, book.Author, book.Year).Scan(&bookID)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	// 5. Return data(encode)
-	json.NewEncoder(w).Encode(bookID)
-}
+// 	// 5. Return data(encode)
+// 	json.NewEncoder(w).Encode(bookID)
+// }
 
-func updateBook(w http.ResponseWriter, r *http.Request) {
-	// 0. Initiate struct Book
-	var book Book
+// func updateBook(w http.ResponseWriter, r *http.Request) {
+// 	// 0. Initiate struct Book
+// 	var book Book
 
-	// 1. Get data request, then decode to Book
-	json.NewDecoder(r.Body).Decode(&book)
+// 	// 1. Get data request, then decode to Book
+// 	json.NewDecoder(r.Body).Decode(&book)
 
-	// 2. Get connection
-	dbConn := createConnection()
-	defer dbConn.Close()
+// 	// 2. Get connection
+// 	dbConn := createConnection()
+// 	defer dbConn.Close()
 
-	// 3. Query to fetch data in DB
-	result, err := dbConn.Exec("UPDATE book.books SET title=$1, author=$2, year=$3 WHERE id=$4 RETURNING id",
-		&book.Title, &book.Author, &book.Year, &book.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
+// 	// 3. Query to fetch data in DB
+// 	result, err := dbConn.Exec("UPDATE book.books SET title=$1, author=$2, year=$3 WHERE id=$4 RETURNING id",
+// 		&book.Title, &book.Author, &book.Year, &book.ID)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	// 4. Checking how many rows was updated => err.RowsAffected()
-	rowUpdated, err := result.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// 5. Response data
-	json.NewEncoder(w).Encode(rowUpdated)
+// 	// 4. Checking how many rows was updated => err.RowsAffected()
+// 	rowUpdated, err := result.RowsAffected()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	// 5. Response data
+// 	json.NewEncoder(w).Encode(rowUpdated)
 
-}
+// }
 
-func deleteBook(w http.ResponseWriter, r *http.Request) {
+// func deleteBook(w http.ResponseWriter, r *http.Request) {
 
-	//1. catch query parameter
-	qParams := mux.Vars(r)
+// 	//1. catch query parameter
+// 	qParams := mux.Vars(r)
 
-	//2. get connection
-	dbConn := createConnection()
-	defer dbConn.Close()
+// 	//2. get connection
+// 	dbConn := createConnection()
+// 	defer dbConn.Close()
 
-	//3. Query to delete data in DB
-	result, err := dbConn.Exec("DELETE FROM boo.books WHERE id=$1", qParams["id"])
-	if err != nil {
-		log.Fatal(err)
-	}
-	//4. Checking how many rows was updated => result.RowsAffected()
-	rowDeleted, err := result.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
+// 	//3. Query to delete data in DB
+// 	result, err := dbConn.Exec("DELETE FROM boo.books WHERE id=$1", qParams["id"])
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	//4. Checking how many rows was updated => result.RowsAffected()
+// 	rowDeleted, err := result.RowsAffected()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	//5. Response data
-	json.NewEncoder(w).Encode(rowDeleted)
-}
+// 	//5. Response data
+// 	json.NewEncoder(w).Encode(rowDeleted)
+// }
 
 func main() {
 	router := mux.NewRouter()
@@ -126,6 +124,8 @@ func main() {
 	router.HandleFunc("/books", addBook).Methods("POST")
 	router.HandleFunc("/books", updateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", deleteBook).Methods("DELETE")
+
+	router.HandleFunc("/signup", controller.Signup(db)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 
