@@ -13,7 +13,7 @@ func (b BookRepository) GetBooks(
 	books []models.Book,
 ) ([]models.Book, error) {
 	// 1. query to fetch data in DB
-	rows, err := db.Query("SELECT *FROM book.books")
+	rows, err := db.Query("SELECT * FROM book.books")
 	if err != nil {
 		return []models.Book{}, err
 	}
@@ -24,6 +24,7 @@ func (b BookRepository) GetBooks(
 		if errScan != nil {
 			return []models.Book{}, err
 		}
+		books = append(books, book)
 	}
 	return books, nil
 }

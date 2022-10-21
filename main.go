@@ -3,6 +3,7 @@ package main
 import (
 	"book-list/controller"
 	"book-list/drivers"
+	"book-list/utils"
 	"database/sql"
 	"log"
 	"net/http"
@@ -19,11 +20,11 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/books", c.GetBooks(dbPsql)).Methods("GET")
+	router.HandleFunc("/books", utils.TokenVerifyMW(c.GetBooks(dbPsql))).Methods("GET")
 	router.HandleFunc("/books/{id}", c.GetBook(dbPsql)).Methods("GET")
 	router.HandleFunc("/books", c.AddBook(dbPsql)).Methods("POST")
 	router.HandleFunc("/books", c.UpdateBook(dbPsql)).Methods("PUT")
-	router.HandleFunc("/books/{id}", c.DeleteBook(dbPsql)).Methods("DELETE")
+	router.HandleFunc("/books/{id}", utils.TokenVerifyMW(c.DeleteBook(dbPsql))).Methods("DELETE")
 
 	router.HandleFunc("/signup", c.Signup(dbPsql)).Methods("POST")
 	router.HandleFunc("/signin", c.Signin(dbPsql)).Methods("POST")
